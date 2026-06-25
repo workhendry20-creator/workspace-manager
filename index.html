@@ -42,38 +42,42 @@
 
     /* Poin 5: Pengecilan ukuran font dasar agar lebih eye-catching */
     body { 
-  background-color: #E2E8F0; 
+  background-color: var(--bg-slate); 
   color: var(--text-dark); 
-  display: flex; 
-  justify-content: center; 
-  align-items: center; 
+  display: block; /* Diubah dari flex ke block agar layout web normal */
   min-height: 100vh; 
-  min-height: 100dvh; /* Mencegah masalah tinggi layar di browser HP */
+  min-height: 100dvh;
   transition: all 0.3s ease;
   font-size: 13px;
-  overflow: hidden; /* Mengunci scroll utama browser laptop */
+  overflow-x: hidden;
 }
 
     /* Frame Mobile Mockup */
-    .phone-frame {
+  .phone-frame {
   width: 100%;
-  max-width: 412px; /* Standar lebar HP */
-  height: 100vh;
-  height: 100dvh;
+  max-width: 100%; /* Menghapus batasan 412px agar menjadi tampilan web di laptop */
+  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--surface);
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease;
 }
-@media (min-width: 480px) {
-  .phone-frame {
-    height: 844px; /* Tinggi standar mockup mobile di laptop */
-    border-radius: 32px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    border: 8px solid #1E293B; /* Bingkai ala gadget */
+@media (min-width: 768px) {
+  /* Membatasi konten di laptop agar tidak terlalu melar ke samping dan tetap sedap dipandang */
+  .content-area {
+    padding: 40px calc((100% - 1000px) / 2); /* Membuat konten rapi di tengah monitor (max-width 1000px) */
   }
+  
+  .top-bar {
+    padding: 0 calc((100% - 1000px) / 2);
+  }
+  
+  .bottom-navbar {
+    padding: 0 calc((100% - 1000px) / 2) 12px calc((100% - 1000px) / 2);
+  }
+}
   body {
     padding: 20px;
     background: radial-gradient(circle at top right, #EEF2F6 0%, #CBD5E1 100%);
@@ -81,7 +85,6 @@
   body.dark-theme-mode {
     background: radial-gradient(circle at top right, #0F172A 0%, #020617 100%);
   }
-}
 
     /* Top Bar Header */
     .top-bar {
@@ -112,11 +115,9 @@
     .content-area { 
   flex: 1; 
   padding: 20px; 
-  overflow-y: auto; /* Hanya bagian ini yang bisa di-scroll */
   background: var(--bg-slate); 
   position: relative; 
   scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch; /* Scroll lancar di iOS */
 }
 
 /* Menyembunyikan scrollbar bawaan agar estetis */
