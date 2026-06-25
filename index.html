@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SWPCM - Workspace Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary: #0F172A;       /* Slate Gelap Modern */
+      --primary-light: #1E293B;
+      --accent: #6366F1;        /* Indigo Glow */
+      --secondary: #10B981;     /* Emerald */
+      --danger: #EF4444;
+      --bg-slate: #F8FAFC;      
+      --surface: #FFFFFF;       
+      --text-dark: #0F172A;
+      --text-muted: #64748B;
+      --border-color: #E2E8F0;
+      --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    }
+
+    body.dark-theme-mode {
+      --primary: #6366F1;       
+      --primary-light: #312E81;
+      --bg-slate: #020617;      
+      --surface: #0B1329;       
+      --text-dark: #F8FAFC;
+      --text-muted: #94A3B8;
+      --border-color: #1E293B;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: 'Poppins', sans-serif; /* Poin 5: Set Poppins */
+    }
+
+    /* Poin 5: Pengecilan ukuran font dasar agar lebih eye-catching */
+    body { 
+  background-color: #E2E8F0; 
+  color: var(--text-dark); 
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  min-height: 100vh; 
+  min-height: 100dvh; /* Mencegah masalah tinggi layar di browser HP */
+  transition: all 0.3s ease;
+  font-size: 13px;
+  overflow: hidden; /* Mengunci scroll utama browser laptop */
+}
+
+    /* Frame Mobile Mockup */
+    .phone-frame {
+  width: 100%;
+  max-width: 412px; /* Standar lebar HP */
+  height: 100vh;
+  height: 100dvh;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+@media (min-width: 480px) {
+  .phone-frame {
+    height: 844px; /* Tinggi standar mockup mobile di laptop */
+    border-radius: 32px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 8px solid #1E293B; /* Bingkai ala gadget */
+  }
+  body {
+    padding: 20px;
+    background: radial-gradient(circle at top right, #EEF2F6 0%, #CBD5E1 100%);
+  }
+  body.dark-theme-mode {
+    background: radial-gradient(circle at top right, #0F172A 0%, #020617 100%);
+  }
+}
+
+    /* Top Bar Header */
+    .top-bar {
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 10;
+    }
+    .top-bar-left { display: flex; align-items: center; gap: 12px; }
+    .top-bar-left i { font-size: 16px; color: var(--text-dark); cursor: pointer; transition: transform 0.2s; }
+    .top-bar-left i:hover { transform: scale(1.1); }
+    .top-bar h1 { font-size: 15px; font-weight: 700; color: var(--text-dark); letter-spacing: -0.3px; }
+    
+    .avatar { 
+      width: 34px; height: 34px; border-radius: 50%; 
+      background-image: url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&q=80'); 
+      background-size: cover;
+      background-position: center;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+    }
+    .back-btn { font-size: 14px; cursor: pointer; color: var(--text-muted); display: none; }
+
+    /* Content Area */
+    .content-area { 
+  flex: 1; 
+  padding: 20px; 
+  overflow-y: auto; /* Hanya bagian ini yang bisa di-scroll */
+  background: var(--bg-slate); 
+  position: relative; 
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* Scroll lancar di iOS */
+}
+
+/* Menyembunyikan scrollbar bawaan agar estetis */
+.content-area::-webkit-scrollbar { 
+  width: 0px; 
+} 
+
+    .view-section { display: none; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    .view-section.active { display: block; }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* DASHBOARD STYLES */
+    .dashboard-title-area { margin-bottom: 20px; }
+    .dashboard-title-area h2 { font-size: 20px; font-weight: 700; color: var(--text-dark); letter-spacing: -0.5px; }
+    .dashboard-title-area p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    
+    .search-container { position: relative; margin-bottom: 20px; }
+    .search-container input { width: 100%; padding: 11px 14px 11px 38px; border: 1px solid var(--border-color); border-radius: 12px; font-size: 12px; outline: none; background: var(--surface); color: var(--text-dark); transition: all 0.2s; }
+    .search-container input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
+    .search-container i { position: absolute; left: 14px; top: 14px; color: var(--text-muted); font-size: 13px; }
+    
+    .promo-banner { background: linear-gradient(135deg, #4338CA 0%, #6366F1 100%); color: white; padding: 18px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }
+    .promo-banner h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .promo-banner p { font-size: 11px; opacity: 0.85; line-height: 1.5; margin-bottom: 12px; }
+    
+    .status-counter { background: var(--surface); border: 1px solid var(--border-color); border-radius: 20px; padding: 16px; text-align: center; margin-bottom: 24px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center;}
+    .counter-icon { width: 38px; height: 38px; background: rgba(99, 102, 241, 0.1); color: var(--accent); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 15px; margin-bottom: 8px; }
+    .status-counter .count { font-size: 28px; font-weight: 700; color: var(--text-dark); line-height: 1; }
+    .status-counter p { font-size: 9px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.8px; margin-top: 6px; }
+    
+    .section-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .section-title { font-size: 13px; font-weight: 700; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.3px; }
+    
+    /* Poin 4: Tombol Close Diletakkan di Atas Panel */
+    .close-all-link { font-size: 11px; font-weight: 600; color: var(--danger); cursor: pointer; display: none; animation: fadeIn 0.3s; }
+    
+    .date-divider { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; margin-top: 16px; display: flex; align-items: center; gap: 8px; }
+    .date-divider::after { content: ''; flex: 1; height: 1px; background: var(--border-color); }
+    
+    .plan-item { 
+      background: var(--surface); 
+      border: 1px solid var(--border-color); 
+      padding: 14px; 
+      border-radius: 16px; 
+      margin-bottom: 12px; 
+      display: flex; 
+      gap: 12px; 
+      position: relative; 
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+    }
+    .plan-item:hover { transform: translateY(-2px); box-shadow: var(--card-shadow); border-color: var(--accent); }
+    .plan-icon-box { width: 36px; height: 36px; background: var(--bg-slate); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 14px; color: var(--accent); flex-shrink: 0; }
+    .plan-details { flex: 1; }
+    .plan-details .title { font-weight: 600; font-size: 13px; color: var(--text-dark); margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .plan-details .meta { font-size: 11px; color: var(--text-muted); display: flex; flex-direction: column; gap: 3px; }
+    .plan-details .meta span { display: flex; align-items: center; gap: 6px; }
+
+    .priority-badge-node { font-size: 8px; font-weight: 700; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; }
+    .priority-badge-node.high { background: #FEE2E2; color: #DC2626; }
+    .priority-badge-node.normal { background: #F1F5F9; color: #475569; }
+
+    /* Poin 4: Struktur Fade Kontainer & Tombol View All di bawah Item ke-3 */
+    .dashboard-list-container { position: relative; }
+    .fade-overlay-box {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 120px;
+      background: linear-gradient(to top, var(--bg-slate) 20%, rgba(248, 250, 252, 0.8) 60%, transparent 100%);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 10px;
+      z-index: 5;
+      pointer-events: auto;
+    }
+    body.dark-theme-mode .fade-overlay-box {
+      background: linear-gradient(to top, var(--bg-slate) 20%, rgba(2, 6, 23, 0.8) 60%, transparent 100%);
+    }
+    .view-all-fade-btn {
+      background: var(--surface);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+      transition: all 0.2s;
+    }
+    .view-all-fade-btn:hover { background: var(--accent); color: white; transform: scale(1.05); }
+
+    /* CALENDAR VIEW STYLES */
+    .g-calendar-card { background: var(--surface); border: 1px solid var(--border-color); border-radius: 20px; padding: 16px; margin-bottom: 16px; box-shadow: var(--card-shadow); }
+    .g-calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .g-calendar-month-year { font-size: 14px; font-weight: 700; color: var(--text-dark); }
+    .g-calendar-nav-btns { display: flex; gap: 12px; }
+    .g-calendar-nav-btns i { font-size: 14px; color: var(--text-muted); cursor: pointer; padding: 6px; border-radius: 8px; background: var(--bg-slate); transition: all 0.2s; }
+    .g-calendar-nav-btns i:hover { color: var(--accent); background: rgba(99, 102, 241, 0.1); }
+    .g-calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; margin-bottom: 8px; }
+    .g-calendar-weekdays span { font-size: 10px; font-weight: 600; color: var(--text-muted); }
+    .g-calendar-days-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; row-gap: 6px; }
+    .g-calendar-day-cell { position: relative; height: 34px; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: 500; color: var(--text-dark); cursor: pointer; border-radius: 50%; width: 34px; margin: 0 auto; transition: all 0.2s; }
+    .g-calendar-day-cell:hover { background: var(--bg-slate); transform: scale(1.1); }
+    .g-calendar-day-cell.empty { cursor: default; background: transparent; }
+    .g-calendar-day-cell.empty:hover { background: transparent; transform: none; }
+    .g-calendar-day-cell.current-sys-date { background: rgba(99, 102, 241, 0.1); color: var(--accent); font-weight: 700; }
+    .g-calendar-day-cell.selected-date { background: var(--accent) !important; color: white !important; font-weight: 700; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3); }
+    .g-day-dot-indicator { position: absolute; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; background-color: var(--secondary); }
+
+    /* FORM (+ ADD) STYLES */
+    .field-group { margin-bottom: 16px; }
+    .field-group label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px; }
+    .field-group input, .field-group textarea, .field-group select { width: 100%; padding: 11px 14px; border: 1px solid var(--border-color); border-radius: 12px; font-size: 12px; color: var(--text-dark); background: var(--surface); outline: none; transition: all 0.2s; }
+    .field-group input:focus, .field-group textarea:focus, .field-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
+    
+    .time-range-row { display: flex; gap: 12px; }
+    .time-range-row .field-group { flex: 1; margin-bottom: 0; }
+
+    /* Poin 3: Button Selector Kanan Kiri (Bukan Dropdown) */
+    .priority-button-selector { display: flex; gap: 8px; background: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 12px; padding: 4px; }
+    .priority-btn-node { flex: 1; text-align: center; padding: 10px 0; font-size: 12px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; background: transparent; color: var(--text-muted); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+    .priority-btn-node.active[data-value="normal"] { background: var(--surface); color: var(--text-dark); box-shadow: 0 2px 6px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+    .priority-btn-node.active[data-value="high"] { background: var(--danger); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); }
+    
+    .reminder-card-box { background: var(--surface); border-radius: 16px; padding: 14px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border-color); margin-top: 8px; margin-bottom: 16px; box-shadow: var(--card-shadow); }
+    .reminder-left-content { display: flex; align-items: center; gap: 12px; }
+    .reminder-icon-circle { width: 34px; height: 34px; background: rgba(99, 102, 241, 0.1); color: var(--accent); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 14px; }
+    .reminder-text-info h4 { font-size: 12px; font-weight: 700; color: var(--text-dark); }
+    .reminder-text-info p { font-size: 10px; color: var(--text-muted); }
+    
+    .switch-widget { position: relative; display: inline-block; width: 42px; height: 22px; }
+    .switch-widget input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #CBD5E1; transition: .3s; border-radius: 22px; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--secondary); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    .loader-inline { display: none; align-items: center; gap: 8px; font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 8px; }
+    .loader-spinner { width: 14px; height: 14px; border: 2px solid var(--border-color); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* BUTTONS */
+    .btn-primary-custom {
+      width: 100%;
+      background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
+      color: #FFFFFF;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    }
+    .btn-primary-custom:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3); }
+
+    /* VISUAL ANALYTICS COMPONENT */
+    .analytics-top-card { background: var(--surface); border: 1px solid var(--border-color); border-radius: 20px; padding: 16px; margin-bottom: 16px; box-shadow: var(--card-shadow); }
+    .analytics-metric-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 12px;}
+    .analytics-metric-box { flex: 1; text-align: center; }
+    .analytics-metric-box h4 { font-size: 18px; font-weight: 700; color: var(--text-dark); }
+    .analytics-metric-box p { font-size: 9px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-top: 2px;}
+    .analytics-divider-v { width: 1px; height: 26px; background: var(--border-color); }
+    
+    .chart-row-item { margin-bottom: 10px; }
+    .chart-info-label { display: flex; justify-content: space-between; font-size: 11px; font-weight: 500; color: var(--text-dark); margin-bottom: 4px; }
+    .progress-bar-bg { background: var(--bg-slate); height: 6px; border-radius: 10px; overflow: hidden; width: 100%; }
+    .progress-bar-fill { background: var(--accent); height: 100%; border-radius: 10px; }
+    .progress-bar-fill.emerald { background: var(--secondary); }
+
+    /* SEGMENT CONTROL */
+    .status-segment-box { background: var(--surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 12px 14px; margin-bottom: 16px; box-shadow: var(--card-shadow); }
+    .segment-label { font-size: 11px; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; }
+    .segment-control { background: var(--bg-slate); border-radius: 10px; padding: 4px; display: flex; gap: 4px; }
+    .segment-btn { flex: 1; text-align: center; padding: 8px 0; font-size: 11px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; background: transparent; color: var(--text-muted); transition: all 0.2s; }
+    .segment-btn.active { background: var(--surface); color: var(--text-dark); box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+
+    .conflict-banner { background-color: #FEE2E2; border: 1px solid #FCA5A5; border-radius: 16px; padding: 12px; display: flex; gap: 10px; align-items: flex-start; margin-bottom: 16px; }
+    .conflict-banner i { color: #DC2626; font-size: 14px; margin-top: 2px; }
+    .conflict-info h4 { font-size: 12px; font-weight: 700; color: #991B1B; }
+    .conflict-info p { font-size: 10px; color: #7F1D1D; line-height: 1.4; }
+
+    /* SETTINGS CARD STYLES */
+    .sync-card { background: var(--surface); border: 1px solid var(--border-color); border-radius: 20px; padding: 16px; margin-bottom: 16px; box-shadow: var(--card-shadow); }
+    .sync-card-title-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+    .sync-card-title-row i { color: var(--accent); font-size: 13px; }
+    .sync-card-title-row h4 { font-size: 11px; font-weight: 700; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.3px; }
+    .sync-lock-label { font-size: 10px; color: var(--text-muted); margin-bottom: 8px; line-height: 1.4; }
+    
+    .g-account-panel { background: var(--bg-slate); border: 1px dashed var(--border-color); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+    .g-account-header { display: flex; align-items: center; justify-content: space-between; }
+    .g-profile-left { display: flex; align-items: center; gap: 8px; }
+    .g-profile-left i { font-size: 18px; color: #3B82F6; } 
+    .g-profile-info h5 { font-size: 11px; font-weight: 700; color: var(--text-dark); }
+    .g-profile-info p { font-size: 10px; color: var(--text-muted); }
+    .g-status-badge { font-size: 8px; font-weight: 700; padding: 3px 6px; border-radius: 8px; background: #E2E8F0; color: #475569; text-transform: uppercase; }
+    .g-status-badge.connected { background: #D1FAE5; color: #065F46; }
+
+    /* EDITABLE PROFILE STYLES */
+    .profile-center-box { text-align: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 12px; }
+    .profile-center-box .avatar-large { 
+      width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 8px auto; 
+      background-image: url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80'); 
+      background-size: cover; background-position: center; border: 3px solid var(--accent);
+    }
+    .profile-display-mode h4 { font-size: 14px; font-weight: 700; color: var(--text-dark); display: inline-block; }
+    .profile-display-mode p { font-size: 11px; color: var(--text-muted); }
+    .edit-pencil-btn { font-size: 11px; color: var(--text-muted); cursor: pointer; margin-left: 6px; }
+    
+    .profile-edit-mode { display: none; flex-direction: column; gap: 8px; max-width: 280px; margin: 8px auto 0 auto; text-align: left; background: var(--bg-slate); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); }
+    .profile-edit-mode label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
+    .profile-edit-mode input[type="text"] { width: 100%; border: 1px solid var(--border-color); background: var(--surface); padding: 6px 10px; font-size: 12px; color: var(--text-dark); border-radius: 8px; outline: none; }
+    .profile-edit-mode input[type="file"] { font-size: 10px; }
+    .profile-edit-actions { display: flex; gap: 6px; margin-top: 4px; }
+    .btn-edit-action { flex: 1; padding: 6px; font-size: 10px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; }
+    .btn-edit-action.save { background: var(--secondary); color: white; }
+    .btn-edit-action.cancel { background: #E5E7EB; color: #374151; }
+    
+    .setting-interactive-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+    .setting-interactive-row:last-child { border-bottom: none; }
+    .setting-info-side h5 { font-size: 12px; font-weight: 600; color: var(--text-dark); }
+    .setting-info-side p { font-size: 10px; color: var(--text-muted); }
+
+    /* Poin 2: FIXED 5-ITEMS BOTTOM NAVBAR WITH COLOR ACTIVE FEEDBACK */
+    .bottom-navbar { 
+  height: 76px; 
+  background: var(--surface); 
+  border-top: 1px solid var(--border-color); 
+  display: flex; 
+  justify-content: space-around; 
+  align-items: flex-end; 
+  padding-bottom: 12px; 
+  position: relative;
+  flex-shrink: 0; /* Mencegah navbar gepeng saat keyboard HP muncul */
+  z-index: 10;
+}
+    .nav-tab { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      font-size: 9px; 
+      font-weight: 600; 
+      color: #94A3B8; 
+      cursor: pointer; 
+      width: 18%; 
+      gap: 4px;
+      padding-bottom: 2px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    } 
+    .nav-tab i { font-size: 16px; transition: transform 0.2s; }
+    
+    /* Poin 2: Warna Button ketika Aktif */
+    .nav-tab.active { color: var(--accent); }
+    .nav-tab.active i { transform: translateY(-2px) scale(1.1); color: var(--accent); }
+    
+    /* Khusus untuk Tab Tengah / Date Sheet Hero */
+    .nav-tab.center-hero-container {
+      width: 22%;
+      position: relative;
+      align-self: center;
+      padding-bottom: 0;
+      margin-top: -20px;
+      z-index: 10;
+    }
+    .hero-circle-btn {
+      width: 48px;
+      height: 48px;
+      background: #E2E8F0;
+      color: #64748B;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-bottom: 2px;
+    }
+    body.dark-theme-mode .hero-circle-btn { background: #1E293B; color: #94A3B8; }
+    .hero-circle-btn i { font-size: 18px; }
+    
+    /* Poin 2: State Aktif untuk Tombol Tengah Hero */
+    .nav-tab.center-hero-container.active .hero-circle-btn {
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+      color: #FFFFFF !important;
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+      transform: translateY(-4px) scale(1.05);
+    }
+    .nav-tab.center-hero-container.active { color: var(--secondary) !important; }
+  </style>
+</head>
+<body>
+
+  <div class="phone-frame">
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <span class="back-btn" id="global-back-btn" onclick="navigateTo('dashboard', 'SWPCM')"><i class="fa-solid fa-chevron-left"></i></span>
+        <i class="fa-solid fa-bars" id="menu-icon"></i>
+        <h1 id="view-title">SWPCM</h1>
+      </div>
+      <div class="avatar" id="global-header-avatar"></div>
+    </div>
+
+    <div class="content-area">
+      
+      <div id="tab-dashboard" class="view-section active">
+        <div class="dashboard-title-area">
+          <h2 data-i18n="dashboardTitle">Dashboard</h2>
+          <p data-i18n="dashboardDesc">Manage your team's workflow and synchronization.</p>
+        </div>
+        <div class="search-container">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="search-placeholder" placeholder="Search plans, activities...">
+        </div>
+        <div class="promo-banner">
+          <h3 data-i18n="promoTitle">Workspace Optimization</h3>
+          <p data-i18n="promoDesc">Your team has reached 84% efficiency this week. 3 new protocols ready for review.</p>
+          <button class="btn-primary-custom" style="width:auto; padding: 6px 12px; font-size:10px; background:rgba(255,255,255,0.15)" onclick="navigateTo('activities', 'Activities')" data-i18n="promoBtn">View Analytics</button>
+        </div>
+        <div class="status-counter">
+          <div class="counter-icon"><i class="fa-solid fa-calendar-check"></i></div>
+          <div class="count" id="total-plans-count">0</div>
+          <p data-i18n="counterLabel">TOTAL SCHEDULED PLANS</p>
+        </div>
+        
+        <div class="section-header-row">
+          <div class="section-title" data-i18n="upcomingTitle">Upcoming Plans</div>
+          <span class="close-all-link" id="dashboard-close-btn" onclick="toggleDashboardCollapse()" data-i18n="closeAll">Close</span>
+        </div>
+
+        <div class="dashboard-list-container">
+          <div id="plans-list-target"></div>
+          <div class="fade-overlay-box" id="dashboard-fade-overlay" style="display: none;">
+            <button class="view-all-fade-btn" onclick="toggleDashboardExpand()" data-i18n="viewAll">View All Events</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-calendar" class="view-section">
+        <div class="dashboard-title-area">
+          <h2 data-i18n="calendarTitle">Calendar Sheet</h2>
+          <p data-i18n="calendarDesc">Browse workspace synchronization matrix dynamically.</p>
+        </div>
+        <div class="g-calendar-card">
+          <div class="g-calendar-header">
+            <div class="g-calendar-month-year" id="cal-month-year-label">June 2026</div>
+            <div class="g-calendar-nav-btns">
+              <i class="fa-solid fa-chevron-left" onclick="changeCalendarMonth(-1)"></i>
+              <i class="fa-solid fa-chevron-right" onclick="changeCalendarMonth(1)"></i>
+            </div>
+          </div>
+          <div class="g-calendar-weekdays"><span data-i18n="dayS">S</span><span data-i18n="dayM">M</span><span data-i18n="dayT">T</span><span data-i18n="dayW">W</span><span data-i18n="dayT2">T</span><span data-i18n="dayF">F</span><span data-i18n="dayS2">S</span></div>
+          <div class="g-calendar-days-grid" id="cal-days-grid-target"></div>
+        </div>
+        <div class="section-header-row"><div class="section-title" id="upcoming-section-title">Events for Selected Date</div></div>
+        <div id="cal-filtered-plans-target"></div>
+      </div>
+
+      <div id="tab-planner" class="view-section">
+        <div class="field-group"><label data-i18n="formName">Plan Name</label><input type="text" id="planName" placeholder="e.g. Quarterly Review Meeting"></div>
+        
+        <div class="field-group">
+          <label data-i18n="formDate">Date</label>
+          <input type="date" id="planDate" value="2026-06-25">
+        </div>
+        
+        <div class="time-range-row">
+          <div class="field-group">
+            <label data-i18n="formStart">Start Time (24h)</label>
+            <input type="time" id="startTime" value="14:30">
+          </div>
+          <div class="field-group">
+            <label data-i18n="formEnd">End Time (24h)</label>
+            <input type="time" id="endTime" value="15:30">
+          </div>
+        </div>
+
+        <div class="field-group" style="margin-top: 14px; margin-bottom: 6px;">
+          <button class="btn-primary-custom" onclick="validateSchedule()"><i class="fa-regular fa-calendar"></i> <span data-i18n="formCheckBtn">Check Availability</span></button>
+          <div class="loader-inline" id="check-avail-loader">
+            <div class="loader-spinner"></div>
+            <span data-i18n="loadingCheck">Analyzing schedule nodes...</span>
+          </div>
+        </div>
+
+        <div class="field-group"><label data-i18n="formLoc">Location</label><input type="text" id="location" placeholder="Conference Room B"></div>
+        
+        <div class="field-group">
+          <label data-i18n="formPriority">Priority Level</label>
+          <div class="priority-button-selector">
+            <button class="priority-btn-node active" id="prio-node-normal" data-value="normal" onclick="selectPriorityForm('normal')" type="button" data-i18n="optNormal">Non-Priority</button>
+            <button class="priority-btn-node" id="prio-node-high" data-value="high" onclick="selectPriorityForm('high')" type="button" data-i18n="optHigh">Priority</button>
+          </div>
+          <input type="hidden" id="planPriority" value="normal">
+        </div>
+
+        <div class="field-group"><label data-i18n="formDesc">Description</label><textarea id="description" rows="3" placeholder="Objective of this plan..."></textarea></div>
+        
+        <div class="reminder-card-box">
+          <div class="reminder-left-content"><div class="reminder-icon-circle"><i class="fa-regular fa-bell"></i></div><div class="reminder-text-info"><h4 data-i18n="formRemTitle">Instant App Reminder</h4><p data-i18n="formRemDesc">Notification trigger on participant device</p></div></div>
+          <label class="switch-widget"><input type="checkbox" id="reminder" checked><span class="slider"></span></label>
+        </div>
+        <button class="btn-primary-custom" onclick="executeSavePlan(false)"><i class="fa-regular fa-floppy-disk"></i> <span data-i18n="formSaveBtn">Save Plan</span></button>
+      </div>
+
+      <div id="tab-activities" class="view-section">
+        <div class="conflict-banner" style="display: none;" id="conflict-alert-box">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <div class="conflict-info">
+            <h4 data-i18n="alertConflictTitle">Potential Conflict Detected</h4>
+            <p id="conflict-text-details">This entry overlaps with an existing schedule segment.</p>
+          </div>
+          <button class="btn-primary-custom" style="width:auto; padding: 6px 12px; font-size:10px;" onclick="dismissConflict()" data-i18n="alertConflictIgnore">Ignore</button>
+        </div>
+        
+        <div class="analytics-top-card">
+          <div class="dashboard-title-area" style="margin-bottom: 0;">
+            <h2 data-i18n="anTitle">Workspace Analytics</h2>
+            <p data-i18n="anDesc">Real-time telemetry and data alignment analytics.</p>
+          </div>
+          
+          <div class="analytics-metric-row">
+            <div class="analytics-metric-box">
+              <h4>84%</h4>
+              <p data-i18n="anEff">Efficiency</p>
+            </div>
+            <div class="analytics-divider-v"></div>
+            <div class="analytics-metric-box">
+              <h4 id="an-done-widget-count">1</h4>
+              <p data-i18n="anDone">Plans Done</p>
+            </div>
+            <div class="analytics-divider-v"></div>
+            <div class="analytics-metric-box">
+              <h4 id="an-upcoming-widget-count">2</h4>
+              <p data-i18n="anUp">Upcoming</p>
+            </div>
+          </div>
+
+          <div class="chart-row-item">
+            <div class="chart-info-label"><span data-i18n="anDirect">Direct Meetings</span><span>65%</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 65%;"></div></div>
+          </div>
+          <div class="chart-row-item">
+            <div class="chart-info-label"><span data-i18n="anDeep">Deep Focus Work</span><span>42%</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill emerald" style="width: 42%;"></div></div>
+          </div>
+        </div>
+        
+        <div class="status-segment-box">
+          <div class="segment-label" data-i18n="segTitle">Activity Status</div>
+          <div class="segment-control">
+            <button class="segment-btn active" id="btn-seg-upcoming" onclick="setSegmentStatus('upcoming')" data-i18n="segUp">Upcoming</button>
+            <button class="segment-btn" id="btn-seg-progress" onclick="setSegmentStatus('progress')" data-i18n="segProg">In Progress</button>
+            <button class="segment-btn" id="btn-seg-done" onclick="setSegmentStatus('done')" data-i18n="segDone">Done</button>
+          </div>
+        </div>
+
+        <div id="activity-plans-target"></div>
+      </div>
+
+      <div id="tab-settings" class="view-section">
+        
+        <div class="sync-card">
+          <div class="profile-center-box">
+            <div class="avatar-large" id="profile-display-avatar"></div>
+            
+            <div class="profile-display-mode" id="profileDisplayContainer">
+              <h4 id="lblProfileName">Sarah Jenkins</h4>
+              <i class="fa-solid fa-pencil edit-pencil-btn" onclick="enableProfileEditMode()"></i>
+              <p id="lblProfileSubname">Senior Systems Lead</p>
+            </div>
+
+            <div class="profile-edit-mode" id="profileEditContainer">
+              <label data-i18n="formProfileName">Full Name</label>
+              <input type="text" id="txtProfileName">
+              
+              <label data-i18n="formProfileSub">Role / Subname</label>
+              <input type="text" id="txtProfileSubname">
+
+              <label data-i18n="formProfileImg">Upload from Gallery</label>
+              <input type="file" id="fileProfileAvatar" accept="image/*" onchange="processGalleryImage(this)">
+
+              <div class="profile-edit-actions">
+                <button class="btn-edit-action cancel" onclick="disableProfileEditMode()" data-i18n="btnCancel">Cancel</button>
+                <button class="btn-edit-action save" onclick="saveProfileDataChanges()" data-i18n="btnSave">Save</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-interactive-row">
+            <div class="setting-info-side">
+              <h5 data-i18n="setDarkTitle">Dark Theme Mode</h5>
+              <p data-i18n="setDarkDesc">Toggle display look and feel matrix</p>
+            </div>
+            <label class="switch-widget">
+              <input type="checkbox" id="themeModeToggle" onchange="toggleSystemTheme()">
+              <span class="slider"></span>
+            </label>
+          </div>
+          
+          <div class="setting-interactive-row" style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 4px;">
+            <div class="setting-info-side">
+              <h5 data-i18n="setLangTitle">System Language</h5>
+              <p data-i18n="setLangDesc">Choose system interface language</p>
+            </div>
+            <select id="langSelector" onchange="changeSystemLanguage()" style="width: auto; padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px;">
+              <option value="en">English</option>
+              <option value="id">Indonesia</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="sync-card">
+          <div class="sync-card-title-row">
+            <i class="fa-solid fa-mobile-screen-button"></i>
+            <h4 data-i18n="engTitle">System Push Notification Engine</h4>
+          </div>
+          <p class="sync-lock-label" id="engLockLabel" data-i18n="engDesc">Aktifkan fitur ini agar HP atau Browser memunculkan alert pengingat secara real-time tepat ketika jadwal dimulai.</p>
+          
+          <div class="g-account-panel">
+            <div class="g-account-header">
+              <div class="g-profile-left">
+                <i class="fa-solid fa-bell-slash" id="notif-system-icon"></i>
+                <div class="g-profile-info">
+                  <h5 id="notif-status-title" data-i18n="engPermTitle">Notification Permission</h5>
+                  <p id="notif-status-desc" data-i18n="engPermDesc">Belum ada izin dari perangkat</p>
+                </div>
+              </div>
+              <div class="g-status-badge" id="notif-status-badge" data-i18n="badgeDisabled">Disabled</div>
+            </div>
+
+            <div class="setting-interactive-row" style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 4px;">
+              <div class="setting-info-side">
+                <h5 data-i18n="engBgTitle">Background Alert System</h5>
+                <p data-i18n="engBgDesc">Tetap ingatkan walaupun aplikasi sedang ditutup</p>
+              </div>
+              <label class="switch-widget">
+                <input type="checkbox" id="backgroundAlertCheckbox" disabled>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <button class="btn-primary-custom" id="requestNotifPermissionBtn" onclick="toggleNotificationEngine()">
+            <i class="fa-solid fa-key" id="notif-btn-icon"></i> <span id="notif-btn-text" data-i18n="engBtnEnable">Izinkan Notifikasi HP</span>
+          </button>
+        </div>
+
+        <div class="sync-card">
+          <div class="sync-card-title-row"><i class="fa-regular fa-bell"></i><h4 data-i18n="notTitle">Notification Window Matrix</h4></div>
+          <div class="setting-interactive-row">
+            <div class="setting-info-side"><h5 data-i18n="not24hTitle">24 Hours Pre-Alert</h5><p data-i18n="not24hDesc">Remind 24 hours prior to workspace event launch</p></div>
+            <label class="switch-widget"><input type="checkbox" id="chkNotif24h" checked><span class="slider"></span></label>
+          </div>
+          <div class="setting-interactive-row">
+            <div class="setting-info-side"><h5 data-i18n="not3hTitle">3 Hours Pre-Alert</h5><p data-i18n="not3hDesc">Trigger high-priority alert 3 hours before start time</p></div>
+            <label class="switch-widget"><input type="checkbox" id="chkNotif3h" checked><span class="slider"></span></label>
+          </div>
+        </div>
+
+        <div class="sync-card" style="border-color: #FCA5A5;">
+          <div class="sync-card-title-row" style="color: #DC2626;"><i class="fa-solid fa-circle-exclamation"></i><h4 data-i18n="maintTitle">System Storage Maintenance</h4></div>
+          <p class="sync-lock-label" id="maint-desc-label">Local Memory Unit: <b>14.2 KB</b> used to store calendar array nodes structural indexes.</p>
+          <button class="btn-primary-custom" style="background:#EF4444;" onclick="resetLocalDatabaseNodes()" data-i18n="maintBtn">Clear Local Database</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="bottom-navbar">
+      <div class="nav-tab active" onclick="navigateTo('dashboard', 'SWPCM')" id="tab-btn-dashboard">
+        <i class="fa-solid fa-calendar-days"></i><span data-i18n="navPlanner">Planner</span>
+      </div>
+      <div class="nav-tab" onclick="navigateTo('planner', 'New Plan')" id="tab-btn-planner">
+        <i class="fa-solid fa-circle-plus"></i><span data-i18n="navAdd">Add</span>
+      </div>
+      
+      <div class="nav-tab center-hero-container" onclick="navigateTo('calendar', 'Calendar Sheet')" id="tab-btn-calendar">
+        <div class="hero-circle-btn">
+          <i class="fa-regular fa-calendar"></i>
+        </div>
+        <span data-i18n="navDate">Date</span>
+      </div>
+      
+      <div class="nav-tab" onclick="navigateTo('activities', 'Activities')" id="tab-btn-activities">
+        <i class="fa-regular fa-clipboard"></i><span data-i18n="navActivities">Activities</span>
+      </div>
+      <div class="nav-tab" onclick="navigateTo('settings', 'Settings')" id="tab-btn-settings">
+        <i class="fa-solid fa-gear"></i><span data-i18n="navSettings">Settings</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let userDataProfile = {
+      fullName: "Sarah Jenkins",
+      subName: "Senior Systems Lead",
+      avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80"
+    };
+
+    let globalPlansArray = [
+      { planName: "Past Retro Meeting", planDate: "2026-06-24", startTime: "10:00", endTime: "11:30", location: "Room A", priority: "normal", description: "Evaluating previous sprint data nodes." },
+      { planName: "Project Review Today", planDate: "2026-06-25", startTime: "14:30", endTime: "15:30", location: "Conf Room Delta", priority: "high", description: "Deep-dive into architectural alignment for the SWPCM engine." },
+      { planName: "Future Client Pitch", planDate: "2026-06-28", startTime: "11:00", endTime: "12:00", location: "Zoom Online", priority: "high", description: "Deliver high-fidelity mockup designs." },
+      { planName: "System Optimization Audit", planDate: "2026-06-30", startTime: "09:00", endTime: "10:30", location: "Tech HQ", priority: "normal", description: "Analyzing data logs structural integrity." }
+    ];
+
+    let currentCalDate = new Date(); 
+    let selectedCalDayStr = getSystemDateTimeNow().dateStr; 
+    let activeSegmentFilter = "upcoming"; 
+    let systemNotifGranted = false;
+    let currentLanguage = "en";
+    let isDashboardExpanded = false; 
+    let base64TempImageStr = "";
+
+    const langDictionary = {
+      en: {
+        dashboardTitle: "Dashboard",
+        dashboardDesc: "Manage your team's workflow and synchronization.",
+        searchPlace: "Search plans, activities...",
+        promoTitle: "Workspace Optimization",
+        promoDesc: "Your team has reached 84% efficiency this week. 3 new protocols ready for review.",
+        promoBtn: "View Analytics",
+        counterLabel: "TOTAL SCHEDULED PLANS",
+        upcomingTitle: "Upcoming Plans",
+        viewAll: "View All Events",
+        closeAll: "Close",
+        calendarTitle: "Calendar Sheet",
+        calendarDesc: "Browse workspace synchronization matrix dynamically.",
+        dayS: "S", dayM: "M", dayT: "T", dayW: "W", dayT2: "T", dayF: "F", dayS2: "S",
+        formName: "Plan Name",
+        formDate: "Date",
+        formStart: "Start Time (24h)",
+        formEnd: "End Time (24h)",
+        formCheckBtn: "Check Availability",
+        formLoc: "Location",
+        formPriority: "Priority Level",
+        optNormal: "Non-Priority",
+        optHigh: "Priority",
+        formDesc: "Description",
+        formRemTitle: "Instant App Reminder",
+        formRemDesc: "Notification trigger on participant device",
+        formSaveBtn: "Save Plan",
+        alertConflictTitle: "Potential Conflict Detected",
+        alertConflictIgnore: "Ignore",
+        anTitle: "Workspace Analytics",
+        anDesc: "Real-time telemetry and data alignment analytics.",
+        anEff: "Efficiency",
+        anDone: "Plans Done",
+        anUp: "Upcoming",
+        anDirect: "Direct Meetings",
+        anDeep: "Deep Focus Work",
+        segTitle: "Activity Status",
+        segUp: "Upcoming",
+        segProg: "In Progress",
+        segDone: "Done",
+        setDarkTitle: "Dark Theme Mode",
+        setDarkDesc: "Toggle display look and feel matrix",
+        setLangTitle: "System Language",
+        setLangDesc: "Choose system interface language",
+        engTitle: "System Push Notification Engine",
+        engDesc: "Activate this feature so that your phone triggers real-time reminder alerts right when the schedule begins.",
+        engPermTitle: "Notification Permission",
+        engPermDesc: "No device authorization given yet",
+        badgeDisabled: "Disabled",
+        badgeActive: "Active",
+        engBgTitle: "Background Alert System",
+        engBgDesc: "Keep reminding even if the application is closed",
+        engBtnEnable: "Enable Phone Notification",
+        engBtnDisable: "Disable Phone Notification",
+        notTitle: "Notification Window Matrix",
+        not24hTitle: "24 Hours Pre-Alert",
+        not24hDesc: "Remind 24 hours prior to workspace event launch",
+        not3hTitle: "3 Hours Pre-Alert",
+        not3hDesc: "Trigger high-priority alert 3 hours before start time",
+        maintTitle: "System Storage Maintenance",
+        maintBtn: "Clear Local Database",
+        navPlanner: "Planner", navAdd: "Add", navDate: "Date", navActivities: "Activities", navSettings: "Settings",
+        eventSelectedDate: "Events for Selected Date",
+        noEventDate: "No workspace plans scheduled on this date.",
+        noEventStatus: "No events categorized under this status.",
+        noUpcoming: "No upcoming plans. Create one!",
+        alertFillForm: "Please fill out Name, Date, Start Time, and End Time!",
+        alertTimeInvalid: "⚠️ Invalid Range: End Time must be after Start Time.",
+        alertAvailable: "✅ Time Slot Available! No scheduling conflicts found.",
+        alertSaved: "Plan Saved Successfully!",
+        alertWipeConfirm: "Are you sure you want to clear all work plans?",
+        formProfileName: "Full Name",
+        formProfileSub: "Role / Subname",
+        formProfileImg: "Upload from Gallery",
+        btnSave: "Save",
+        btnCancel: "Cancel",
+        loadingCheck: "Analyzing schedule nodes...",
+        conflictChoiceMsg: "A schedule conflict was detected! Choose an action node:\n\nPress OK to double event anyway.\nPress CANCEL to clear time."
+      },
+      id: {
+        dashboardTitle: "Dasbor",
+        dashboardDesc: "Kelola alur kerja dan sinkronisasi tim Anda.",
+        searchPlace: "Cari rencana, aktivitas...",
+        promoTitle: "Optimalisasi Ruang Kerja",
+        promoDesc: "Tim Anda mencapai efisiensi 84% minggu ini. 3 protokol baru siap ditinjau.",
+        promoBtn: "Lihat Analitik",
+        counterLabel: "TOTAL RENCANA TERJADWAL",
+        upcomingTitle: "Rencana Mendatang",
+        viewAll: "Lihat Semua Event",
+        closeAll: "Tutup Panel",
+        calendarTitle: "Lembar Kalender",
+        calendarDesc: "Jelajahi matriks sinkronisasi ruang kerja secara dinamis.",
+        dayS: "M", dayM: "S", dayT: "S", dayW: "R", dayT2: "K", dayF: "J", dayS2: "S",
+        formName: "Nama Rencana",
+        formDate: "Tanggal",
+        formStart: "Waktu Mulai (24j)",
+        formEnd: "Waktu Selesai (24j)",
+        formCheckBtn: "Periksa Ketersediaan",
+        formLoc: "Lokasi",
+        formPriority: "Tingkat Prioritas",
+        optNormal: "Bukan Prioritas",
+        optHigh: "Prioritas",
+        formDesc: "Deskripsi",
+        formRemTitle: "Pengingat Instan Aplikasi",
+        formRemDesc: "Pengingat otomatis di hp peserta jadwal",
+        formSaveBtn: "Simpan Rencana",
+        alertConflictTitle: "Potensi Konflik Terdeteksi",
+        alertConflictIgnore: "Abaikan",
+        anTitle: "Analitik Ruang Kerja",
+        anDesc: "Telemetri waktu nyata dan analitik keselarasan data.",
+        anEff: "Efisiensi",
+        anDone: "Selesai",
+        anUp: "Mendatang",
+        anDirect: "Rapat Langsung",
+        anDeep: "Fokus Kerja Dalam",
+        segTitle: "Status Aktivitas",
+        segUp: "Mendatang",
+        segProg: "Berjalan",
+        segDone: "Selesai",
+        setDarkTitle: "Mode Tema Gelap",
+        setDarkDesc: "Ubah tampilan visual estetika sistem",
+        setLangTitle: "Bahasa Sistem",
+        setLangDesc: "Pilih bahasa untuk antarmuka aplikasi",
+        engTitle: "Sistem Notifikasi HP",
+        engDesc: "Aktifkan fitur ini agar HP memunculkan alert pengingat secara real-time tepat ketika jadwal dimulai.",
+        engPermTitle: "Izin Notifikasi",
+        engPermDesc: "Belum ada izin dari perangkat",
+        badgeDisabled: "Nonaktif",
+        badgeActive: "Aktif",
+        engBgTitle: "Sistem Siaga Latar Belakang",
+        engBgDesc: "Tetap ingatkan walaupun aplikasi sedang ditutup",
+        engBtnEnable: "Izinkan Notifikasi HP",
+        engBtnDisable: "Matikan Notifikasi HP",
+        notTitle: "Matriks Jendela Notifikasi",
+        not24hTitle: "Peringatan Siaga 24 Jam",
+        not24hDesc: "Ingatkan 24 jam sebelum peluncuran agenda ruang kerja",
+        not3hTitle: "Peringatan Siaga 3 Jam",
+        not3hDesc: "Pemicu alert prioritas tinggi 3 jam sebelum waktu mulai",
+        maintTitle: "Pemeliharaan Penyimpanan Sistem",
+        maintBtn: "Kosongkan Database Lokal",
+        navPlanner: "Rencana", navAdd: "Tambah", navDate: "Tanggal", navActivities: "Aktivitas", navSettings: "Pengaturan",
+        eventSelectedDate: "Acara untuk Tanggal Terpilih",
+        noEventDate: "Tidak ada rencana kerja pada tanggal ini.",
+        noEventStatus: "Tidak ada aktivitas dalam kategori status ini.",
+        noUpcoming: "Belum ada rencana. Buat sekarang!",
+        alertFillForm: "Harap isi Nama, Tanggal, Waktu Mulai, dan Waktu Selesai!",
+        alertTimeInvalid: "⚠️ Rentang tidak valid: Waktu Selesai harus setelah Waktu Mulai.",
+        alertAvailable: "✅ Slot Waktu Tersedia!",
+        alertSaved: "Rencana Berhasil Disimpan!",
+        alertWipeConfirm: "Apakah Anda yakin ingin menghapus semua rencana?",
+        formProfileName: "Nama Lengkap",
+        formProfileSub: "Peran / Subnama",
+        formProfileImg: "Unggah dari Galeri",
+        btnSave: "Simpan",
+        btnCancel: "Batal",
+        loadingCheck: "Menganalisis nodus jadwal...",
+        conflictChoiceMsg: "Terdeteksi konflik jadwal! Pilih aksi sistem:\n\nKlik OK jika gapapa di double event.\nKlik CANCEL untuk mencari ketersediaan lain."
+      }
+    };
+
+    function getSystemDateTimeNow() {
+      const now = new Date();
+      return { dateStr: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`, timeStr: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}` };
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById('planDate').value = getSystemDateTimeNow().dateStr;
+      refreshProfileDOM();
+      applyLanguageTranslation();
+      fetchDashboardDatabase(); 
+    });
+
+    // PROFILE INTERACTIVE MANAGER
+    function enableProfileEditMode() {
+      document.getElementById('profileDisplayContainer').style.display = 'none';
+      document.getElementById('profileEditContainer').style.display = 'flex';
+      document.getElementById('txtProfileName').value = userDataProfile.fullName;
+      document.getElementById('txtProfileSubname').value = userDataProfile.subName;
+      base64TempImageStr = userDataProfile.avatarUrl;
+    }
+
+    function disableProfileEditMode() {
+      document.getElementById('profileEditContainer').style.display = 'none';
+      document.getElementById('profileDisplayContainer').style.display = 'inline-block';
+      document.getElementById('fileProfileAvatar').value = ""; 
+    }
+
+    function processGalleryImage(inputElement) {
+      const file = inputElement.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) { base64TempImageStr = e.target.result; };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function saveProfileDataChanges() {
+      if(document.getElementById('txtProfileName').value.trim()) userDataProfile.fullName = document.getElementById('txtProfileName').value.trim();
+      if(document.getElementById('txtProfileSubname').value.trim()) userDataProfile.subName = document.getElementById('txtProfileSubname').value.trim();
+      if(base64TempImageStr) userDataProfile.avatarUrl = base64TempImageStr;
+      refreshProfileDOM();
+      disableProfileEditMode();
+    }
+
+    function refreshProfileDOM() {
+      document.getElementById('lblProfileName').innerText = userDataProfile.fullName;
+      document.getElementById('lblProfileSubname').innerText = userDataProfile.subName;
+      document.getElementById('profile-display-avatar').style.backgroundImage = `url('${userDataProfile.avatarUrl}')`;
+      document.getElementById('global-header-avatar').style.backgroundImage = `url('${userDataProfile.avatarUrl}')`;
+    }
+
+    // Poin 3: Handler klik untuk selector priority kanan kiri
+    function selectPriorityForm(val) {
+      document.getElementById('prio-node-normal').classList.remove('active');
+      document.getElementById('prio-node-high').classList.remove('active');
+      
+      if(val === 'high') {
+        document.getElementById('prio-node-high').classList.add('active');
+      } else {
+        document.getElementById('prio-node-normal').classList.add('active');
+      }
+      document.getElementById('planPriority').value = val;
+    }
+
+    // Poin 4: Kontrol Ekspansi List Event Dashboard
+    function toggleDashboardExpand() {
+      isDashboardExpanded = true;
+      document.getElementById('dashboard-fade-overlay').style.display = 'none';
+      document.getElementById('dashboard-close-btn').style.display = 'block'; // Tampilkan Close di atas
+      renderAllPlansDashboard();
+    }
+
+    function toggleDashboardCollapse() {
+      isDashboardExpanded = false;
+      document.getElementById('dashboard-close-btn').style.display = 'none'; // Sembunyikan Close di atas
+      renderAllPlansDashboard();
+    }
+
+    function changeSystemLanguage() {
+      currentLanguage = document.getElementById('langSelector').value;
+      applyLanguageTranslation();
+      fetchDashboardDatabase();
+    }
+
+    function applyLanguageTranslation() {
+      const dict = langDictionary[currentLanguage];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.innerHTML = dict[key];
+      });
+      document.getElementById('search-placeholder').placeholder = dict.searchPlace;
+    }
+
+    function navigateTo(targetView, screenTitle) {
+      document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+      
+      document.getElementById(`tab-${targetView}`).classList.add('active');
+      if(document.getElementById(`tab-btn-${targetView}`)) document.getElementById(`tab-btn-${targetView}`).classList.add('active');
+      
+      document.getElementById('view-title').innerText = (targetView === 'dashboard') ? "SWPCM" : langDictionary[currentLanguage][`nav${targetView.charAt(0).toUpperCase() + targetView.slice(1)}`] || screenTitle;
+      
+      document.getElementById('global-back-btn').style.display = (targetView !== 'dashboard') ? 'block' : 'none';
+      document.getElementById('menu-icon').style.display = (targetView === 'dashboard') ? 'block' : 'none';
+
+      if (targetView === 'calendar') { renderGoogleCalendar(); filterAndRenderCalendarEvents(); }
+      if (targetView === 'activities') { updateAnalyticsWidgetCounts(); renderSegmentedActivities(); }
+      if (targetView === 'dashboard') { fetchDashboardDatabase(); }
+    }
+
+    function toggleSystemTheme() {
+      document.body.classList.toggle('dark-theme-mode', document.getElementById('themeModeToggle').checked);
+    }
+
+    function toggleNotificationEngine() {
+      if (systemNotifGranted) {
+        systemNotifGranted = false; updateNotifUIDisabled();
+      } else {
+        if (!window.Notification) return;
+        Notification.requestPermission().then(p => { if (p === "granted") updateNotifUIConnected(); });
+      }
+    }
+
+    function updateNotifUIConnected() {
+      systemNotifGranted = true;
+      const dict = langDictionary[currentLanguage];
+      document.getElementById('notif-btn-text').innerText = dict.engBtnDisable;
+      document.getElementById('notif-system-icon').className = "fa-solid fa-bell";
+      document.getElementById('notif-system-icon').style.color = "var(--secondary)";
+      document.getElementById('notif-status-badge').innerText = dict.badgeActive;
+      document.getElementById('notif-status-badge').className = "g-status-badge connected";
+      document.getElementById('backgroundAlertCheckbox').disabled = false;
+    }
+
+    function updateNotifUIDisabled() {
+      systemNotifGranted = false;
+      const dict = langDictionary[currentLanguage];
+      document.getElementById('notif-btn-text').innerText = dict.engBtnEnable;
+      document.getElementById('notif-system-icon').className = "fa-solid fa-bell-slash";
+      document.getElementById('notif-system-icon').style.color = "var(--text-muted)";
+      document.getElementById('notif-status-badge').innerText = dict.badgeDisabled;
+      document.getElementById('notif-status-badge').className = "g-status-badge";
+      document.getElementById('backgroundAlertCheckbox').disabled = true;
+    }
+
+    function resetLocalDatabaseNodes() {
+      if(confirm(langDictionary[currentLanguage].alertWipeConfirm)) {
+        globalPlansArray = []; fetchDashboardDatabase(); navigateTo('dashboard', 'SWPCM');
+      }
+    }
+
+    function updateAnalyticsWidgetCounts() {
+      const sysNow = getSystemDateTimeNow();
+      let done = 0; let upcoming = 0;
+      globalPlansArray.forEach(p => {
+        if (p.planDate < sysNow.dateStr || (p.planDate === sysNow.dateStr && p.endTime < sysNow.timeStr)) done++;
+        else if (!(p.planDate === sysNow.dateStr && p.startTime <= sysNow.timeStr && p.endTime >= sysNow.timeStr)) upcoming++;
+      });
+      document.getElementById('an-done-widget-count').innerText = done;
+      document.getElementById('an-upcoming-widget-count').innerText = upcoming;
+    }
+
+    function setSegmentStatus(status) {
+      activeSegmentFilter = status;
+      document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`btn-seg-${status}`).classList.add('active');
+      renderSegmentedActivities();
+    }
+
+    function renderSegmentedActivities() {
+      const targetList = document.getElementById('activity-plans-target');
+      if (!targetList) return;
+      const sysNow = getSystemDateTimeNow();
+
+      let filteredPlans = globalPlansArray.filter(plan => {
+        if (plan.planDate < sysNow.dateStr) return activeSegmentFilter === 'done';
+        else if (plan.planDate > sysNow.dateStr) return activeSegmentFilter === 'upcoming';
+        else {
+          if (plan.endTime < sysNow.timeStr) return activeSegmentFilter === 'done';
+          else if (plan.startTime > sysNow.timeStr) return activeSegmentFilter === 'upcoming';
+          else return activeSegmentFilter === 'progress';
+        }
+      });
+
+      if (activeSegmentFilter === 'done') {
+        filteredPlans.sort((a, b) => b.planDate.localeCompare(a.planDate) || b.startTime.localeCompare(a.startTime));
+      } else if (activeSegmentFilter === 'upcoming') {
+        filteredPlans.sort((a, b) => a.planDate.localeCompare(b.planDate) || a.startTime.localeCompare(a.startTime));
+      }
+
+      if (filteredPlans.length === 0) {
+        targetList.innerHTML = `<p style="font-size:11px; color:var(--text-muted); text-align:center; padding:20px;">${langDictionary[currentLanguage].noEventStatus}</p>`;
+        return;
+      }
+
+      let renderDom = "";
+      filteredPlans.forEach(item => {
+        renderDom += `
+          <div class="plan-item">
+            <div class="plan-icon-box"><i class="fa-solid fa-calendar"></i></div>
+            <div class="plan-details">
+              <div class="title"><span>${item.planName}</span><span class="priority-badge-node ${item.priority}">${item.priority === 'high' ? 'Priority' : 'Non-Priority'}</span></div>
+              <div class="meta">
+                <span><i class="fa-regular fa-calendar"></i> ${item.planDate}</span>
+                <span><i class="fa-regular fa-clock"></i> ${item.startTime} - ${item.endTime}</span>
+              </div>
+            </div>
+          </div>`;
+      });
+      targetList.innerHTML = renderDom;
+    }
+
+    function checkConflictExist(dateVal, startVal, endVal) {
+      return globalPlansArray.find(plan => plan.planDate === dateVal && (startVal < plan.endTime && endVal > plan.startTime));
+    }
+
+    function validateSchedule() {
+      const dateVal = document.getElementById('planDate').value;
+      const startVal = document.getElementById('startTime').value;
+      const endVal = document.getElementById('endTime').value;
+      if (!dateVal || !startVal || !endVal) { alert(langDictionary[currentLanguage].alertFillForm); return; }
+
+      document.getElementById('check-avail-loader').style.display = "flex";
+      setTimeout(() => {
+        document.getElementById('check-avail-loader').style.display = "none";
+        const conflictingPlan = checkConflictExist(dateVal, startVal, endVal);
+        if (conflictingPlan) {
+          if (confirm(langDictionary[currentLanguage].conflictChoiceMsg)) executeSavePlan(true);
+          else { document.getElementById('startTime').value = ""; document.getElementById('endTime').value = ""; }
+        } else { alert(langDictionary[currentLanguage].alertAvailable); }
+      }, 1200);
+    }
+
+    function executeSavePlan(bypassConflictCheck = false) {
+      const name = document.getElementById('planName').value.trim();
+      const dateVal = document.getElementById('planDate').value;
+      const startVal = document.getElementById('startTime').value;
+      const endVal = document.getElementById('endTime').value;
+      const loc = document.getElementById('location').value.trim();
+      const priorityVal = document.getElementById('planPriority').value;
+      const desc = document.getElementById('description').value.trim();
+
+      if (!name || !dateVal || !startVal || !endVal) { alert(langDictionary[currentLanguage].alertFillForm); return; }
+
+      if (!bypassConflictCheck && checkConflictExist(dateVal, startVal, endVal)) {
+        if (!confirm(langDictionary[currentLanguage].conflictChoiceMsg)) return;
+      }
+
+      globalPlansArray.push({ planName: name, planDate: dateVal, startTime: startVal, endTime: endVal, location: loc || "Main Hub", priority: priorityVal, description: desc });
+      document.getElementById('planName').value = "";
+      alert(langDictionary[currentLanguage].alertSaved);
+      navigateTo('dashboard', 'SWPCM');
+    }
+
+    function renderGoogleCalendar() {
+      const gridTarget = document.getElementById('cal-days-grid-target');
+      const monthYearLabel = document.getElementById('cal-month-year-label');
+      const year = currentCalDate.getFullYear();
+      const month = currentCalDate.getMonth();
+      
+      monthYearLabel.innerText = `${currentLanguage === "en" ? ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][month] : ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][month]} ${year}`;
+      gridTarget.innerHTML = "";
+      
+      const firstDayIndex = new Date(year, month, 1).getDay();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDayIndex; i++) gridTarget.innerHTML += `<div class="g-calendar-day-cell empty"></div>`;
+      for (let day = 1; day <= totalDays; day++) {
+        const loopStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        let cls = "g-calendar-day-cell";
+        if (loopStr === getSystemDateTimeNow().dateStr) cls += " current-sys-date";
+        if (loopStr === selectedCalDayStr) cls += " selected-date";
+        let hasEvent = globalPlansArray.some(p => p.planDate === loopStr);
+        gridTarget.innerHTML += `<div class="${cls}" onclick="selectCalendarDate('${loopStr}')">${day}${hasEvent ? '<div class="g-day-dot-indicator"></div>':''}</div>`;
+      }
+    }
+
+    function changeCalendarMonth(offset) { currentCalDate.setMonth(currentCalDate.getMonth() + offset); renderGoogleCalendar(); }
+    function selectCalendarDate(dateStr) { selectedCalDayStr = dateStr; renderGoogleCalendar(); filterAndRenderCalendarEvents(); }
+
+    function filterAndRenderCalendarEvents() {
+      const targetList = document.getElementById('cal-filtered-plans-target');
+      const filtered = globalPlansArray.filter(p => p.planDate === selectedCalDayStr);
+      if (filtered.length === 0) {
+        targetList.innerHTML = `<p style="font-size:11px; color:var(--text-muted); text-align:center; padding:20px;">${langDictionary[currentLanguage].noEventDate}</p>`;
+        return;
+      }
+      let renderDom = "";
+      filtered.forEach(item => {
+        renderDom += `<div class="plan-item"><div class="plan-icon-box"><i class="fa-solid fa-calendar"></i></div><div class="plan-details"><div class="title"><span>${item.planName}</span></div><div class="meta"><span>${item.startTime} - ${item.endTime}</span></div></div></div>`;
+      });
+      targetList.innerHTML = renderDom;
+    }
+
+    function fetchDashboardDatabase() {
+      document.getElementById('total-plans-count').innerText = globalPlansArray.length;
+      globalPlansArray.sort((a, b) => a.planDate.localeCompare(b.planDate) || a.startTime.localeCompare(b.startTime));
+      renderAllPlansDashboard(); 
+    }
+
+    // Poin 4: Logika Render Kombinasi Fade Blur pada Data Lebih dari 3
+    function renderAllPlansDashboard() {
+      const targetList = document.getElementById('plans-list-target');
+      if(!targetList) return;
+      
+      if(globalPlansArray.length === 0) {
+        targetList.innerHTML = `<p style="font-size:11px; color:var(--text-muted); text-align:center; padding: 20px;">${langDictionary[currentLanguage].noUpcoming}</p>`;
+        document.getElementById('dashboard-fade-overlay').style.display = 'none';
+        return;
+      }
+      
+      // Batasi tampilan jika status ekspansi FALSE
+      let renderedArray = [...globalPlansArray];
+      if (!isDashboardExpanded && globalPlansArray.length > 3) {
+        renderedArray = renderedArray.slice(0, 3);
+        document.getElementById('dashboard-fade-overlay').style.display = 'flex'; // Aktifkan overlay fade samar-samar
+      } else {
+        document.getElementById('dashboard-fade-overlay').style.display = 'none';
+      }
+
+      let renderDom = ""; let currentGroupDate = "";
+      renderedArray.forEach(item => {
+        if (item.planDate !== currentGroupDate) { currentGroupDate = item.planDate; renderDom += `<div class="date-divider">${item.planDate}</div>`; }
+        renderDom += `
+          <div class="plan-item">
+            <div class="plan-icon-box"><i class="fa-solid fa-calendar"></i></div>
+            <div class="plan-details">
+              <div class="title"><span>${item.planName}</span><span class="priority-badge-node ${item.priority}">${item.priority === 'high' ? 'Priority' : 'Non-Priority'}</span></div>
+              <div class="meta"><span><i class="fa-regular fa-clock"></i> ${item.startTime} - ${item.endTime}</span><span><i class="fa-solid fa-location-dot"></i> ${item.location}</span></div>
+            </div>
+          </div>`;
+      });
+      targetList.innerHTML = renderDom;
+    }
+  </script>
+</body>
+</html>
