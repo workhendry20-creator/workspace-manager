@@ -42,9 +42,11 @@
 
     /* Poin 5: Pengecilan ukuran font dasar agar lebih eye-catching */
     body { 
-  background-color: var(--bg-slate); 
+  background-color: var(--bg-slate); /* Mengikuti warna tema aplikasi, atau ganti #FFFFFF jika ingin putih bersih */
   color: var(--text-dark); 
-  display: block; /* Diubah dari flex ke block agar layout web normal */
+  display: block; 
+  margin: 0;         /* 👈 WAJIB: Menghapus margin bawaan browser */
+  padding: 0;        /* 👈 WAJIB: Menghapus padding agar mentok ke ujung layar */
   min-height: 100vh; 
   min-height: 100dvh;
   transition: all 0.3s ease;
@@ -78,10 +80,7 @@
     padding: 0 calc((100% - 1000px) / 2) 12px calc((100% - 1000px) / 2);
   }
 }
-  body {
-    padding: 20px;
-    background: radial-gradient(circle at top right, #EEF2F6 0%, #CBD5E1 100%);
-  }
+  
   body.dark-theme-mode {
     background: radial-gradient(circle at top right, #0F172A 0%, #020617 100%);
   }
