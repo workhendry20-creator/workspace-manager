@@ -42,34 +42,38 @@
 
     /* Poin 5: Pengecilan ukuran font dasar agar lebih eye-catching */
     body { 
-  background-color: var(--bg-slate); /* Mengikuti warna tema aplikasi, atau ganti #FFFFFF jika ingin putih bersih */
-  color: var(--text-dark); 
-  display: block; 
-  margin: 0;         /* 👈 WAJIB: Menghapus margin bawaan browser */
-  padding: 0;        /* 👈 WAJIB: Menghapus padding agar mentok ke ujung layar */
-  min-height: 100vh; 
-  min-height: 100dvh;
-  transition: all 0.3s ease;
-  font-size: 13px;
-  overflow-x: hidden;
+  background-color: var(--bg-slate, #f8fafc); 
+  margin: 0;
+  padding: 0;
+  display: block; /* Mengembalikan flexbox HP ke display normal desktop */
+  min-height: 100vh;
+  overflow-y: auto; /* Mengaktifkan kembali scroll browser utama */
 }
 
     /* Frame Mobile Mockup */
   .phone-frame {
-  width: 100%;
-  max-width: 100%; /* Menghapus batasan 412px agar menjadi tampilan web di laptop */
-  min-height: 100vh;
-  min-height: 100dvh;
-  background: var(--surface);
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-}
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    
+    /* Memastikan struktur flexbox di dalamnya tetap membagi ruang dengan benar */
+    display: flex;
+    flex-direction: column;
+  }
 @media (min-width: 768px) {
   /* Membatasi konten di laptop agar tidak terlalu melar ke samping dan tetap sedap dipandang */
   .content-area {
     padding: 40px calc((100% - 1000px) / 2); /* Membuat konten rapi di tengah monitor (max-width 1000px) */
+  }
+  .content-area, #tab-date, .calendar-sheet-page { 
+    flex: 1;
+    overflow-y: auto;
   }
   
   .top-bar {
@@ -112,11 +116,13 @@
 
     /* Content Area */
     .content-area { 
-  flex: 1; 
+  flex: 1;            
   padding: 20px; 
+  overflow-y: auto;          /* 👈 Isi chat/konten bisa di-scroll di sini */
   background: var(--bg-slate); 
   position: relative; 
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; 
 }
 
 /* Menyembunyikan scrollbar bawaan agar estetis */
@@ -361,9 +367,9 @@
   justify-content: space-around; 
   align-items: flex-end; 
   padding-bottom: 12px; 
-  position: relative;
-  flex-shrink: 0; /* Mencegah navbar gepeng saat keyboard HP muncul */
-  z-index: 10;
+  position: relative; 
+  flex-shrink: 0;            /* 👈 Biar navbar gak penyet/gepeng */
+  z-index: 10;        
 }
     .nav-tab { 
       display: flex; 
@@ -488,22 +494,28 @@
 
       <div id="tab-planner" class="view-section">
         <div class="field-group"><label data-i18n="formName">Plan Name</label><input type="text" id="planName" placeholder="e.g. Quarterly Review Meeting"></div>
-        
+        <div class="field-group">
+  <label>⚡ PILIHAN CEPAT KEGIATAN (PRESET)</label>
+  <select id="eventPresetSelect" onchange="applyQuickPreset()">
+    <option value="">-- Isi Manual / Custom --</option>
+    <option value="gym">🟢 Gym Palace (20:00 - 21:30)</option>
+    <option value="aqma_pagi">🔵 Klinik Aqma - Pagi (09:00 - 12:00)</option>
+    <option value="aqma_sore">🔵 Klinik Aqma - Sore (17:00 - 20:00)</option>
+  </select>
+</div>
         <div class="field-group">
           <label data-i18n="formDate">Date</label>
           <input type="date" id="planDate" value="2026-06-25">
         </div>
         
         <div class="time-range-row">
-          <div class="field-group">
-            <label data-i18n="formStart">Start Time (24h)</label>
-            <input type="time" id="startTime" value="14:30">
-          </div>
-          <div class="field-group">
-            <label data-i18n="formEnd">End Time (24h)</label>
-            <input type="time" id="endTime" value="15:30">
-          </div>
-        </div>
+  <div class="field-group">
+    <label data-i18n="formStart">Start Time</label>
+    <input type="time" id="startTime" value="14:30" step="60"> </div>
+  <div class="field-group">
+    <label data-i18n="formEnd">End Time</label>
+    <input type="time" id="endTime" value="15:30" step="60">   </div>
+</div>
 
         <div class="field-group" style="margin-top: 14px; margin-bottom: 6px;">
           <button class="btn-primary-custom" onclick="validateSchedule()"><i class="fa-regular fa-calendar"></i> <span data-i18n="formCheckBtn">Check Availability</span></button>
@@ -728,12 +740,25 @@
       avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80"
     };
 
-    let globalPlansArray = [
-      { planName: "Past Retro Meeting", planDate: "2026-06-24", startTime: "10:00", endTime: "11:30", location: "Room A", priority: "normal", description: "Evaluating previous sprint data nodes." },
-      { planName: "Project Review Today", planDate: "2026-06-25", startTime: "14:30", endTime: "15:30", location: "Conf Room Delta", priority: "high", description: "Deep-dive into architectural alignment for the SWPCM engine." },
-      { planName: "Future Client Pitch", planDate: "2026-06-28", startTime: "11:00", endTime: "12:00", location: "Zoom Online", priority: "high", description: "Deliver high-fidelity mockup designs." },
-      { planName: "System Optimization Audit", planDate: "2026-06-30", startTime: "09:00", endTime: "10:30", location: "Tech HQ", priority: "normal", description: "Analyzing data logs structural integrity." }
-    ];
+    // 1. Jadwal rutin khusus (Mandatory) yang diatur oleh user
+let userMandatoryRoutine = {
+  days: [1, 2, 3, 4, 5], // 1 = Senin s/d 5 = Jumat
+  startTime: "16:00",
+  endTime: "20:00",
+  title: "Praktek Mandiri"
+};
+
+// 2. Array utama penampung semua rencana (Gabungan bawaan + input baru)
+let globalPlansArray = [
+  { planName: "Past Retro Meeting", planDate: "2026-06-24", startTime: "10:00", endTime: "11:30", location: "Room A", priority: "normal", description: "" },
+  { planName: "Project Review Today", planDate: "2026-06-25", startTime: "14:30", endTime: "15:30", location: "Conf Room Delta", priority: "high", description: "" },
+  
+  // Contoh data dari gambaran jadwal barumu:
+  { planName: "Gym Palace", planDate: "2026-07-01", startTime: "20:00", endTime: "21:30", location: "Gym Palace Hub", priority: "normal", description: "Latihan rutin" },
+  { planName: "Gym Palace", planDate: "2026-07-03", startTime: "13:00", endTime: "14:30", location: "Gym Palace Hub", priority: "normal", description: "" },
+  { planName: "Klinik Aqma (Pagi)", planDate: "2026-07-04", startTime: "09:00", endTime: "12:00", location: "Klinik Aqma", priority: "high", description: "Shift Pagi" },
+  { planName: "Klinik Aqma (Sore)", planDate: "2026-07-04", startTime: "17:00", endTime: "20:00", location: "Klinik Aqma", priority: "high", description: "Shift Sore" }
+];
 
     let currentCalDate = new Date(); 
     let selectedCalDayStr = getSystemDateTimeNow().dateStr; 
@@ -760,8 +785,8 @@
         dayS: "S", dayM: "M", dayT: "T", dayW: "W", dayT2: "T", dayF: "F", dayS2: "S",
         formName: "Plan Name",
         formDate: "Date",
-        formStart: "Start Time (24h)",
-        formEnd: "End Time (24h)",
+        formStart: "Start Time",
+        formEnd: "End Time",
         formCheckBtn: "Check Availability",
         formLoc: "Location",
         formPriority: "Priority Level",
@@ -939,6 +964,48 @@
         reader.readAsDataURL(file);
       }
     }
+
+    // Fungsi pintasan mengisi form otomatis (Quick Preset)
+function applyQuickPreset() {
+  const selectedPreset = document.getElementById('eventPresetSelect').value;
+  
+  // Menargetkan ID input bawaan kode kamu (sesuaikan id-nya jika berbeda)
+  const planNameInput = document.getElementById('planName');
+  const startTimeInput = document.getElementById('startTime');
+  const endTimeInput = document.getElementById('endTime');
+  const locationInput = document.getElementById('location');
+
+  if (selectedPreset === 'gym') {
+    planNameInput.value = "Gym Palace";
+    startTimeInput.value = "20:00";
+    endTimeInput.value = "21:30";
+    locationInput.value = "Gym Palace Hub";
+  } else if (selectedPreset === 'aqma_pagi') {
+    planNameInput.value = "Klinik Aqma (Pagi)";
+    startTimeInput.value = "09:00";
+    endTimeInput.value = "12:00";
+    locationInput.value = "Klinik Aqma";
+  } else if (selectedPreset === 'aqma_sore') {
+    planNameInput.value = "Klinik Aqma (Sore)";
+    startTimeInput.value = "17:00";
+    endTimeInput.value = "20:00";
+    locationInput.value = "Klinik Aqma";
+  }
+}
+
+// Fungsi mengecek apakah jam menabrak Praktek Mandiri (Senin-Jumat 16:00-20:00)
+function checkMandatoryConflict(chosenDate, newStart, newEnd) {
+  const dayIndex = new Date(chosenDate).getDay(); // 0 = Minggu, 1 = Senin, dst.
+  
+  // Cek apakah hari tersebut masuk Senin - Jumat
+  if (userMandatoryRoutine.days.includes(dayIndex)) {
+    // Irisan waktu matematik: (Mulai Baru < Selesai Rutin) DAN (Selesai Baru > Mulai Rutin)
+    if (newStart < userMandatoryRoutine.endTime && newEnd > userMandatoryRoutine.startTime) {
+      return true; // Bentrok terdeteksi!
+    }
+  }
+  return false;
+}
 
     function saveProfileDataChanges() {
       if(document.getElementById('txtProfileName').value.trim()) userDataProfile.fullName = document.getElementById('txtProfileName').value.trim();
@@ -1138,6 +1205,9 @@
     }
 
     function executeSavePlan(bypassConflictCheck = false) {
+      const inputDate = document.getElementById('planDate').value;
+      const inputStart = document.getElementById('startTime').value;
+      const inputEnd = document.getElementById('endTime').value;
       const name = document.getElementById('planName').value.trim();
       const dateVal = document.getElementById('planDate').value;
       const startVal = document.getElementById('startTime').value;
@@ -1145,6 +1215,13 @@
       const loc = document.getElementById('location').value.trim();
       const priorityVal = document.getElementById('planPriority').value;
       const desc = document.getElementById('description').value.trim();
+
+      if (checkMandatoryConflict(inputDate, inputStart, inputEnd)) {
+  const tanyakanUser = confirm("⚠️ Perhatian!\nJadwal baru ini bentrok dengan waktu '" + userMandatoryRoutine.title + "' Anda (16:00 - 20:00).\n\nApakah Anda tetap ingin memaksakan simpan?");
+  if (!tanyakanUser) {
+    return; // Stop eksekusi, batalkan penyimpanan data jika user klik Cancel
+  }
+}
 
       if (!name || !dateVal || !startVal || !endVal) { alert(langDictionary[currentLanguage].alertFillForm); return; }
 
@@ -1238,6 +1315,14 @@
       });
       targetList.innerHTML = renderDom;
     }
+    // Paksa input time bawaan menggunakan format lokal Indonesia (24 Jam)
+document.addEventListener("DOMContentLoaded", function() {
+    const startTimeInput = document.getElementById('startTime');
+    const endTimeInput = document.getElementById('endTime');
+    
+    if(startTimeInput) startTimeInput.setAttribute('lang', 'id-ID');
+    if(endTimeInput) endTimeInput.setAttribute('lang', 'id-ID');
+});
   </script>
 </body>
 </html>
