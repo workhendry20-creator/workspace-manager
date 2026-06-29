@@ -1319,6 +1319,54 @@ function checkMandatoryConflict(chosenDate, newStart, newEnd) {
       });
       targetList.innerHTML = renderDom;
     }
+    // ==========================================================================
+// LOGIKA ENGINE PENGINGAT (BUNYI 5 MENIT SEBELUM & TEPAT JAM ACARA)
+// ==========================================================================
+
+// Inisialisasi nada alarm/ringtone standar
+const ringtoneAlert = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-600.wav');
+
+function runSmartReminderEngine() {
+  // Ambil waktu lokal saat ini
+  const sekarang = new Date();
+  
+  // Ganti 'globalPlansArray' dengan nama array penyimpanan jadwal di kodemu jika berbeda
+  if (typeof globalPlansArray === 'undefined' || !globalPlansArray) return;
+
+  globalPlansArray.forEach(plan => {
+    // Pastikan plan memiliki data tanggal (date) dan jam mulai (startTime)
+    if (!plan.date || !plan.startTime) return;
+
+    const waktuAcara = new Date(plan.date + 'T' + plan.startTime);
+    const selisihMilidetik = waktuAcara - sekarang;
+    
+    // Hitung sisa waktu dalam hitungan menit
+    const selisihMenit = Math.floor(selisihMilidetik / 60000);
+
+    // 🔴 Pemicu 1: Tepat 5 Menit Sebelum Acara Dimulai
+    if (selisihMenit === 5) {
+      ringtoneAlert.play().catch(e => console.log("Audio berbunyi setelah ada interaksi pertama user."));
+      if (Notification.permission === "granted") {
+        new Notification("SWPCM - 5 Minutes Reminder", {
+          body: `Bersiap! 5 menit lagi acara "${plan.name || 'Jadwal'}" akan segera dimulai.`,
+        });
+      }
+    }
+
+    // 🔴 Pemicu 2: Tepat Jam H-0 Acara Dimulai
+    if (selisihMenit === 0) {
+      ringtoneAlert.play().catch(e => console.log("Audio berbunyi setelah ada interaksi pertama user."));
+      if (Notification.permission === "granted") {
+        new Notification("SWPCM - Event Started!", {
+          body: `Waktunya! Acara "${plan.name || 'Jadwal'}" dimulai sekarang.`,
+        });
+      }
+    }
+  });
+}
+
+// Jalankan pengecekan ini secara otomatis setiap 60 detik (1 menit)
+setInterval(runSmartReminderEngine, 60000);
     // Paksa input time bawaan menggunakan format lokal Indonesia (24 Jam)
 document.addEventListener("DOMContentLoaded", function() {
     const startTimeInput = document.getElementById('startTime');
